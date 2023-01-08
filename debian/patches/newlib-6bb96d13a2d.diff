@@ -1,0 +1,162 @@
+diff --git a/newlib/configure.host b/newlib/configure.host
+index 4ac53342a..ef481ff52 100644
+--- a/newlib/configure.host
++++ b/newlib/configure.host
+@@ -289,7 +289,7 @@ case "${host_cpu}" in
+ 	;;
+   nvptx*)
+ 	machine_dir=nvptx
+-	newlib_cflags="${newlib_cflags} -DMALLOC_PROVIDED"
++	newlib_cflags="${newlib_cflags} -DCLOCK_PROVIDED -DMALLOC_PROVIDED"
+ 	;;
+   or1k*|or1knd*)
+ 	machine_dir=or1k
+diff --git a/newlib/libc/machine/nvptx/Makefile.am b/newlib/libc/machine/nvptx/Makefile.am
+index 66664d3c2..b0d4c7822 100644
+--- a/newlib/libc/machine/nvptx/Makefile.am
++++ b/newlib/libc/machine/nvptx/Makefile.am
+@@ -10,7 +10,7 @@ noinst_LIBRARIES = lib.a
+ 
+ lib_a_SOURCES = calloc.c callocr.c malloc.c mallocr.c realloc.c reallocr.c \
+ 		free.c write.c assert.c puts.c putchar.c printf.c abort.c \
+-		exit.c misc.c
++		exit.c misc.c clock.c
+ lib_a_CFLAGS = $(AM_CFLAGS)
+ 
+ ACLOCAL_AMFLAGS = -I ../../.. -I ../../../..
+diff --git a/newlib/libc/machine/nvptx/Makefile.in b/newlib/libc/machine/nvptx/Makefile.in
+index 75256b352..a01e09725 100644
+--- a/newlib/libc/machine/nvptx/Makefile.in
++++ b/newlib/libc/machine/nvptx/Makefile.in
+@@ -76,7 +76,7 @@ am_lib_a_OBJECTS = lib_a-calloc.$(OBJEXT) lib_a-callocr.$(OBJEXT) \
+ 	lib_a-assert.$(OBJEXT) lib_a-puts.$(OBJEXT) \
+ 	lib_a-putchar.$(OBJEXT) lib_a-printf.$(OBJEXT) \
+ 	lib_a-abort.$(OBJEXT) lib_a-exit.$(OBJEXT) \
+-	lib_a-misc.$(OBJEXT)
++	lib_a-misc.$(OBJEXT) lib_a-clock.$(OBJEXT)
+ lib_a_OBJECTS = $(am_lib_a_OBJECTS)
+ DEFAULT_INCLUDES = -I.@am__isrc@
+ depcomp =
+@@ -188,6 +188,7 @@ prefix = @prefix@
+ program_transform_name = @program_transform_name@
+ psdir = @psdir@
+ sbindir = @sbindir@
++shared_machine_dir = @shared_machine_dir@
+ sharedstatedir = @sharedstatedir@
+ srcdir = @srcdir@
+ sys_dir = @sys_dir@
+@@ -202,7 +203,7 @@ AM_CCASFLAGS = $(INCLUDES)
+ noinst_LIBRARIES = lib.a
+ lib_a_SOURCES = calloc.c callocr.c malloc.c mallocr.c realloc.c reallocr.c \
+ 		free.c write.c assert.c puts.c putchar.c printf.c abort.c \
+-		exit.c misc.c
++		exit.c misc.c clock.c
+ 
+ lib_a_CFLAGS = $(AM_CFLAGS)
+ ACLOCAL_AMFLAGS = -I ../../.. -I ../../../..
+@@ -355,6 +356,12 @@ lib_a-misc.o: misc.c
+ lib_a-misc.obj: misc.c
+ 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_a_CFLAGS) $(CFLAGS) -c -o lib_a-misc.obj `if test -f 'misc.c'; then $(CYGPATH_W) 'misc.c'; else $(CYGPATH_W) '$(srcdir)/misc.c'; fi`
+ 
++lib_a-clock.o: clock.c
++	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_a_CFLAGS) $(CFLAGS) -c -o lib_a-clock.o `test -f 'clock.c' || echo '$(srcdir)/'`clock.c
++
++lib_a-clock.obj: clock.c
++	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_a_CFLAGS) $(CFLAGS) -c -o lib_a-clock.obj `if test -f 'clock.c'; then $(CYGPATH_W) 'clock.c'; else $(CYGPATH_W) '$(srcdir)/clock.c'; fi`
++
+ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
+ 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
+ 	unique=`for i in $$list; do \
+diff --git a/newlib/libc/machine/nvptx/clock.c b/newlib/libc/machine/nvptx/clock.c
+new file mode 100644
+index 000000000..1ad69f1ea
+--- /dev/null
++++ b/newlib/libc/machine/nvptx/clock.c
+@@ -0,0 +1,18 @@
++/* clock.c
++ * Support file for nvptx in newlib.
++ */
++#include <time.h>
++
++clock_t
++clock ()
++{
++  unsigned long long now;
++#if __PTX_SM__ >= 310
++  asm volatile("mov.u64 %0, %%globaltimer;" : "=r"(now));
++  return now/((1000000000ull)/CLOCKS_PER_SEC);
++#else
++  asm volatile("mov.u64 %0, %%clock64;" : "=r"(now));
++  // Assume a GPU base clock frequency of 1250MHz.
++  return now/((1250000000ull)/CLOCKS_PER_SEC);
++#endif
++}
+diff --git a/newlib/libc/machine/nvptx/configure b/newlib/libc/machine/nvptx/configure
+index 282728efe..29d16d924 100644
+--- a/newlib/libc/machine/nvptx/configure
++++ b/newlib/libc/machine/nvptx/configure
+@@ -565,6 +565,7 @@ ac_unique_file="Makefile.am"
+ ac_subst_vars='LTLIBOBJS
+ LIBOBJS
+ sys_dir
++shared_machine_dir
+ machine_dir
+ libm_machine_dir
+ lpfx
+@@ -3428,6 +3429,7 @@ OBJEXT=${oext}
+ 
+ 
+ 
++
+ ac_config_files="$ac_config_files Makefile"
+ 
+ cat >confcache <<\_ACEOF
+diff --git a/newlib/libc/machine/nvptx/misc.c b/newlib/libc/machine/nvptx/misc.c
+index ed1bc3478..ef76eaae1 100644
+--- a/newlib/libc/machine/nvptx/misc.c
++++ b/newlib/libc/machine/nvptx/misc.c
+@@ -15,6 +15,7 @@
+ 
+ #include <errno.h>
+ #include <sys/types.h>
++#include <sys/stat.h>
+ #undef errno
+ extern int errno;
+ 
+@@ -23,12 +24,36 @@ close(int fd) {
+   return -1;
+ }
+ 
++int
++fstat (int fd, struct stat *buf) {
++  return -1;
++}
++
++int
++isatty (int fd) {
++  return fd == 1;
++}
++
+ off_t
+ lseek(int fd, off_t offset, int whence) {
+   return 0;
+ }
+ 
++int
++open (const char *pathname, int flags, ...) {
++  return -1;
++}
++
+ int
+ read(int fd, void *buf, size_t count) {
+   return 0;
+ }
++
++void
++sync (void) {
++}
++
++int
++unlink (const char *pathname) {
++  return -1;
++}
