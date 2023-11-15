@@ -1453,7 +1453,7 @@ else ifeq ($(distribution),Ubuntu)
   endif
   pie_archs += riscv64
 endif
-ifeq ($(distribution),Pexos)
+ifeq ($(distribution),PexOS)
   pie_archs = amd64 arm64
 endif
 ifneq (,$(filter $(DEB_TARGET_ARCH),$(pie_archs)))
