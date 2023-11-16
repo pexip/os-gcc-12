@@ -1,3 +1,9 @@
+gcc-12 (12.2.0-14pexip2) pexip-bookworm; urgency=medium
+
+  * Initial bookworm build
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Thu, 16 Nov 2023 09:59:42 +0000
+
 gcc-12 (12.2.0-14pexip1) pexip; urgency=medium
 
   * Prepare Pexip packaging
