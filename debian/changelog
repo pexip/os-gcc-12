@@ -1,3 +1,9 @@
+gcc-12 (12.2.0-14+pexip24u6) pexip-bookworm; urgency=medium
+
+  * New versioning scheme
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Thu, 01 Feb 2024 15:58:20 +0000
+
 gcc-12 (12.2.0-14pexip5) pexip-bookworm; urgency=medium
 
   * Rebuild for override changes
