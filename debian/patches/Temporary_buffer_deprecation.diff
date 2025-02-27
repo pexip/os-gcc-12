@@ -1,0 +1,19 @@
+--- a/src/libstdc++-v3/include/bits/stl_tempbuf.h	2025-02-27 17:51:19.335133297 +0000
++++ b/src/libstdc++-v3/include/bits/stl_tempbuf.h	2025-02-27 17:51:41.131238955 +0000
+@@ -254,6 +254,8 @@
+ 	  __ucr(__first, __last, __seed);
+     }
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+   template<typename _ForwardIterator, typename _Tp>
+     _Temporary_buffer<_ForwardIterator, _Tp>::
+     _Temporary_buffer(_ForwardIterator __seed, size_type __original_len)
+@@ -278,6 +280,7 @@
+ 	    }
+ 	}
+     }
++#pragma GCC diagnostic pop
+ 
+ _GLIBCXX_END_NAMESPACE_VERSION
+ } // namespace

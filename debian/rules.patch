@@ -244,6 +244,7 @@ endif
 
 debian_patches += libgomp-kfreebsd-testsuite
 debian_patches += go-testsuite
+debian_patches += Temporary_buffer_deprecation
 
 # don't remove, this is regularly overwritten, see PR sanitizer/63958.
 #debian_patches += libasan-sparc
