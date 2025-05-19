@@ -246,6 +246,8 @@ debian_patches += libgomp-kfreebsd-testsuite
 debian_patches += go-testsuite
 debian_patches += Temporary_buffer_deprecation
 
+debian_patches += CVE-2023-4039
+
 # don't remove, this is regularly overwritten, see PR sanitizer/63958.
 #debian_patches += libasan-sparc
 
